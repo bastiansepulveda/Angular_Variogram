@@ -1,22 +1,22 @@
-# Librerías
+# Libraries
 library(fields)
 library(MASS)
 library(imager)
 library(writexl)
 
 
-######### Funciones para tratar imágenes #########
+######### Functions for processing images #########
 
-# Abre una imagen, la convierte a escala de grises y devuelve una matriz.
-abrirImagen <- function(path){
+# Opens an image, converts it to grayscale, and returns an array.
+openImage <- function(path){
   img <- load.image(path)
   img <- grayscale(img)
   img_matrix <- as.array(img)[,,1,1]
   return(img_matrix)
 }
 
-# Rotación de una imagen cuadrada.
-rotarImagen <- function(img, rot){
+# Rotation of a square image.
+rotateImage <- function(img, rot){
   l <- dim(img)[1]
   im <- as.cimg(img)
   im_rot <- imrotate(im, rot)
@@ -29,17 +29,20 @@ rotarImagen <- function(img, rot){
   return(img_rot)
 }
 
-# Reescalamiento de una imagen cuadrada a una matriz de lxl
-escalarImagen <- function(img, l){
+# Rescaling a square image to an lxl matrix
+scaleImage <- function(img, l){
   img <- as.cimg(img)
   img <- resize(img, l, l)
   img_matrix <- as.array(img)[,,1,1]
   return(img_matrix)
 }
 
-######### Estimadores del Variograma Angular, Variograma Angular Cruzado y Pseudo Variograma Angular Cruzado #########
 
-# Estimador del Variograma Angular
+######################
+##### ESTIMATORS #####
+######################
+
+# Angular Variogram Estimator
 VarAng <- function(img){
   var_ang <- numeric(180)
   l <- dim(img)[1]
@@ -63,7 +66,7 @@ VarAng <- function(img){
   return(var_ang)
 }
 
-# Estimador del Variograma Angular Cruzado
+# Angular Cross-Variogram Estimator
 VarAngCr <- function(img1, img2){
   var_ang_cr <- numeric(180)
   l <- dim(img1)[1]
@@ -91,7 +94,7 @@ VarAngCr <- function(img1, img2){
   return(var_ang_cr)
 }
 
-# Estimador del Pseudo Variograma Angular Cruzado
+# Angular Pseudo Cross-Variogram Estimator
 PseudoVarAngCr <- function(img1, img2){
   pseudo_var_ang_cr <- numeric(180)
   l <- dim(img1)[1]
@@ -120,7 +123,7 @@ PseudoVarAngCr <- function(img1, img2){
 }
 
 
-######### Estimadores considerando particiones de 2 en 2 #########
+######### Estimators considering 2-by-2 partitions #########
 
 VarAng2 <- function(img){
   var_ang <- numeric(90)
@@ -199,7 +202,7 @@ PseudoVarAngCr2 <- function(img1, img2){
   return(pseudo_var_ang_cr)
 }
 
-######### Estimadores considerando particiones de 3 en 3 #########
+######### Estimators considering 3-by-3 partitions #########
 
 VarAng3 <- function(img){
   var_ang <- numeric(60)
@@ -278,7 +281,7 @@ PseudoVarAngCr3 <- function(img1, img2){
   return(pseudo_var_ang_cr)
 }
 
-######### Estimadores considerando particiones de 5 en 5 #########
+######### Estimators considering 5-by-5 partitions #########
 
 VarAng5 <- function(img){
   var_ang <- numeric(36)
@@ -357,12 +360,14 @@ PseudoVarAngCr5 <- function(img1, img2){
   return(pseudo_var_ang_cr)
 }
 
-######### Funciones de Covarianza #########
+######### Covariance Functions #########
 
+# Exponential
 cov_function_exp <- function(h, a=1, scale=1) {
   return(scale * exp(-a * h))
 }
 
+# Spherical
 cov_function_spherical <- function(h, a=1) {
   cov_values <- ifelse(h <= a, 
                        1 - 1.5 * (h / a) + 0.5 * (h / a)^3,
@@ -370,31 +375,32 @@ cov_function_spherical <- function(h, a=1) {
   return(cov_values)
 }
 
+# Gaussian
 cov_function_gaussian <- function(h, a=1) {
   exp(- (h^2) / (2 * a^2))
 }
 
 
-######### SIMULACIÓN DE IMÁGENES CON COVARIANZA EXPONENCIAL #########
+######### SIMULATION OF IMAGES WITH EXPONENTIAL COVARIANCE #########
 
-# Parámetros de la grilla
-nx <- 50  # Número de píxeles a lo largo del eje x
-ny <- 50  # Número de píxeles a lo largo del eje y
+# Grid parameters
+nx <- 50  # Number of pixels along the x axis
+ny <- 50  # Number of pixels along the y axis
 
-# Crear una malla
+# Create a grid
 x <- seq(0, 1, length = nx)
 y <- seq(0, 1, length = ny)
 grid <- expand.grid(x = x, y = y)
 
-# Calcular la matriz de covarianza
+# Calculate the covariance matrix
 distances <- as.matrix(dist(grid))
 cov_matrix_exp <- cov_function_exp(distances)
 
-# Iniciar un dataframe para guardar todas las imágenes
+# Define a dataframe to save all images
 all_images1 <- c()
 startTime <- Sys.time()
 for(i in 1:100){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images1 <- cbind(all_images1, sim_img)
@@ -403,7 +409,7 @@ write.csv(all_images1, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images2 <- c()
 for(i in 101:200){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images2 <- cbind(all_images2, sim_img)
@@ -412,7 +418,7 @@ write.csv(all_images2, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images3 <- c()
 for(i in 201:300){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images3 <- cbind(all_images3, sim_img)
@@ -421,7 +427,7 @@ write.csv(all_images3, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images4 <- c()
 for(i in 301:400){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images4 <- cbind(all_images4, sim_img)
@@ -430,7 +436,7 @@ write.csv(all_images4, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images5 <- c()
 for(i in 401:500){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images5 <- cbind(all_images5, sim_img)
@@ -439,7 +445,7 @@ write.csv(all_images5, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images6 <- c()
 for(i in 501:600){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images6 <- cbind(all_images6, sim_img)
@@ -448,7 +454,7 @@ write.csv(all_images6, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images7 <- c()
 for(i in 601:700){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images7 <- cbind(all_images7, sim_img)
@@ -457,7 +463,7 @@ write.csv(all_images7, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images8 <- c()
 for(i in 701:800){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images8 <- cbind(all_images8, sim_img)
@@ -466,7 +472,7 @@ write.csv(all_images8, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images9 <- c()
 for(i in 801:900){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images9 <- cbind(all_images9, sim_img)
@@ -475,7 +481,7 @@ write.csv(all_images9, "C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi
 
 all_images10 <- c()
 for(i in 901:1000){
-  cat("Imagen número:",i)
+  cat("Image number:",i)
   set.seed(i)
   sim_img <- mvrnorm(n = 1, mu = rep(0, nx * ny), Sigma = cov_matrix_exp)
   all_images10 <- cbind(all_images10, sim_img)
@@ -486,7 +492,7 @@ endTime <- Sys.time()
 print(endTime - startTime)
 
 
-# Lectura de los archivos con las imágenes
+# Reading files with images
 for(i in 1:10){
   eval(parse(text = paste0("sim_img_exp_df",i," <- read.csv('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/Geodésica/sim_img",i,".csv', header = TRUE)","")))
 }
@@ -494,18 +500,18 @@ sim_img_exp_df <- cbind(sim_img_exp_df1, sim_img_exp_df2, sim_img_exp_df3, sim_i
 
 image_exp_list <- list()
 
-# Convertir cada columna en una matriz 2D y almacenar en la lista
+# Convert each column to a 2D array and save to list
 for (i in 1:ncol(sim_img_exp_df)) {
   image_vector <- as.vector(sim_img_exp_df[, i])
   image_matrix <- matrix(image_vector, nrow = nx)
   image_exp_list[[i]] <- image_matrix
 }
 
-# Resultados del Variograma Angular Cruzado para los ángulo 3, 30 y 45
+# Results of the Angular Cross-Variogram for angles 3°, 30° and 45°
 ang_min_3 <- c()
 for(i in 1:1000){
-  cat("Imagen número:",i,"\n")
-  vac <- VarAngCr(image_exp_list[[i]], rotarImagen(image_exp_list[[i]], 3))
+  cat("Image number:",i,"\n")
+  vac <- VarAngCr(image_exp_list[[i]], rotateImage(image_exp_list[[i]], 3))
   ind <- which(sapply(vac, function(x) x == min(vac)))
   ang_min_3[i] <- rbind(as.integer(ind))
 }
@@ -515,8 +521,8 @@ summary(ang_min_3)
 
 ang_min_30 <- c()
 for(i in 1:1000){
-  cat("Imagen número:",i,"\n")
-  vac <- VarAngCr(image_exp_list[[i]], rotarImagen(image_exp_list[[i]], 30))
+  cat("Image number:",i,"\n")
+  vac <- VarAngCr(image_exp_list[[i]], rotateImage(image_exp_list[[i]], 30))
   ind <- which(sapply(vac, function(x) x == min(vac)))
   ang_min_30[i] <- rbind(as.integer(ind))
 }
@@ -526,8 +532,8 @@ sd(ang_min_30)
 
 ang_min_45 <- c()
 for(i in 1:1000){
-  cat("Imagen número:",i,"\n")
-  vac <- VarAngCr(image_exp_list[[i]], rotarImagen(image_exp_list[[i]], 45))
+  cat("Image number:",i,"\n")
+  vac <- VarAngCr(image_exp_list[[i]], rotateImage(image_exp_list[[i]], 45))
   ind <- which(sapply(vac, function(x) x == min(vac)))
   ang_min_45[i] <- rbind(as.integer(ind))
 }
@@ -536,11 +542,11 @@ median(ang_min_45)
 sd(ang_min_45)
 
 
-# Resultados del Pseudo Variograma Angular Cruzado para los ángulo 3, 30 y 45
+# Results of the Angular Pseudo Cross-Variogram for angles 3°, 30° and 45°
 pseudo_ang_min_3 <- c()
 for(i in 1:1000){
-  cat("Imagen número:",i,"\n")
-  vac <- PseudoVarAngCr(image_exp_list[[i]], rotarImagen(image_exp_list[[i]], 3))
+  cat("Image number:",i,"\n")
+  vac <- PseudoVarAngCr(image_exp_list[[i]], rotateImage(image_exp_list[[i]], 3))
   ind <- which(sapply(vac, function(x) x == min(vac)))
   pseudo_ang_min_3[i] <- rbind(as.integer(ind))
 }
@@ -550,8 +556,8 @@ sd(pseudo_ang_min_3)
 
 pseudo_ang_min_30 <- c()
 for(i in 1:1000){
-  cat("Imagen número:",i,"\n")
-  vac <- PseudoVarAngCr(image_exp_list[[i]], rotarImagen(image_exp_list[[i]], 30))
+  cat("Image number:",i,"\n")
+  vac <- PseudoVarAngCr(image_exp_list[[i]], rotateImage(image_exp_list[[i]], 30))
   ind <- which(sapply(vac, function(x) x == min(vac)))
   pseudo_ang_min_30[i] <- rbind(as.integer(ind))
 }
@@ -561,8 +567,8 @@ sd(pseudo_ang_min_30)
 
 pseudo_ang_min_45 <- c()
 for(i in 1:1000){
-  cat("Imagen número:",i,"\n")
-  vac <- PseudoVarAngCr(image_exp_list[[i]], rotarImagen(image_exp_list[[i]], 45))
+  cat("Image number:",i,"\n")
+  vac <- PseudoVarAngCr(image_exp_list[[i]], rotateImage(image_exp_list[[i]], 45))
   ind <- which(sapply(vac, function(x) x == min(vac)))
   pseudo_ang_min_45[i] <- rbind(as.integer(ind))
 }
@@ -571,47 +577,47 @@ median(pseudo_ang_min_45)
 sd(pseudo_ang_min_45)
 
 
-######### ANÁLISIS DE IMÁGENES CON DISTORSIONES (TID2013) #########
+######### ANALYSIS OF IMAGES WITH DISTORTIONS (TID2013) #########
 
-# Se abren las imágenes de referencia y con distorsión, y se reescalan a 300x300.
+# The reference and distorted images are opened and rescaled to 300x300.
 for(i in 1:25){
-  cat("Imagen número: ", i, " \n")
+  cat("Image number: ", i, " \n")
   if(i < 10){
-    eval(parse(text = paste0("img", i, " <- escalarImagen(abrirImagen('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/reference_images/I0", i, ".bmp'), 300)")))
+    eval(parse(text = paste0("img", i, " <- scaleImage(openImage('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/reference_images/I0", i, ".bmp'), 300)")))
     for(j in 1:24){
       if(j < 10){
-        eval(parse(text = paste0("img", i, "_d_", j, " <- escalarImagen(abrirImagen('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/distorted_images/i0", i, "_0", j, "_5.bmp'), 300)")))
+        eval(parse(text = paste0("img", i, "_d_", j, " <- scaleImage(openImage('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/distorted_images/i0", i, "_0", j, "_5.bmp'), 300)")))
       }
       else{
-        eval(parse(text = paste0("img", i, "_d_", j, " <- escalarImagen(abrirImagen('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/distorted_images/i0", i, "_", j, "_5.bmp'), 300)")))
+        eval(parse(text = paste0("img", i, "_d_", j, " <- scaleImage(openImage('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/distorted_images/i0", i, "_", j, "_5.bmp'), 300)")))
       }
     }
   }
   else{
-    eval(parse(text = paste0("img", i, " <- escalarImagen(abrirImagen('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/reference_images/I", i, ".bmp'), 300)")))
+    eval(parse(text = paste0("img", i, " <- scaleImage(openImage('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/reference_images/I", i, ".bmp'), 300)")))
     for(j in 1:24){
       if(j < 10){
-        eval(parse(text = paste0("img", i, "_d_", j, " <- escalarImagen(abrirImagen('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/distorted_images/i", i, "_0", j, "_5.bmp'), 300)")))
+        eval(parse(text = paste0("img", i, "_d_", j, " <- scaleImage(openImage('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/distorted_images/i", i, "_0", j, "_5.bmp'), 300)")))
       }
       else{
-        eval(parse(text = paste0("img", i, "_d_", j, " <- escalarImagen(abrirImagen('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/distorted_images/i", i, "_", j, "_5.bmp'), 300)")))
+        eval(parse(text = paste0("img", i, "_d_", j, " <- scaleImage(openImage('C:/Users/basti/OneDrive/Documentos/Google Drive Local/Mi Unidad/12vo Semestre/Memoria/tid2013/distorted_images/i", i, "_", j, "_5.bmp'), 300)")))
       }
     }
   }
 }
 
-# Se obtienen los Variogramas Angulares de las imágenes de referencia
+# Angular Variograms are obtained from the reference images
 for(i in 1:25){
   cat("Variograma Angular nro: ", i, " \n")
   eval(parse(text = paste0("var_ang_", i, " <- VarAng(img", i, ")")))
 }
 
-# Se obtienen los Variogramas Angulares Cruzado para los ángulos 3, 30 y 45
+# The Angular Cross-Variograms are obtained for angles 3°, 30° and 45°
 for(i in 1:25){
-  cat("Imagen nro: ", i, " \n")
+  cat("Image nro: ", i, " \n")
   for(j in 1:24){
-    cat("   Distorsión nro: ", j, " \n")
-    eval(parse(text = paste0("var_ang_cr_", i, "_", j, "_3 <- VarAngCr(img", i, ", rotarImagen(img", i, "_d_", j, ", 3))")))
+    cat("   Distortion nro: ", j, " \n")
+    eval(parse(text = paste0("var_ang_cr_", i, "_", j, "_3 <- VarAngCr(img", i, ", rotateImage(img", i, "_d_", j, ", 3))")))
   }
 }
 var_ang_cr_3 <- c()
@@ -622,10 +628,10 @@ for(i in 1:25){
 }
 
 for(i in 1:25){
-  cat("Imagen nro: ", i, " \n")
+  cat("Image nro: ", i, " \n")
   for(j in 1:24){
-    cat("   Distorsión nro: ", j, " \n")
-    eval(parse(text = paste0("var_ang_cr_", i, "_", j, "_30 <- VarAngCr(img", i, ", rotarImagen(img", i, "_d_", j, ", 30))")))
+    cat("   Distortion nro: ", j, " \n")
+    eval(parse(text = paste0("var_ang_cr_", i, "_", j, "_30 <- VarAngCr(img", i, ", rotateImage(img", i, "_d_", j, ", 30))")))
   }
 }
 var_ang_cr_30 <- c()
@@ -636,10 +642,10 @@ for(i in 1:25){
 }
 
 for(i in 1:25){
-  cat("Imagen nro: ", i, " \n")
+  cat("Image nro: ", i, " \n")
   for(j in 1:24){
-    cat("   Distorsión nro: ", j, " \n")
-    eval(parse(text = paste0("var_ang_cr_", i, "_", j, "_45 <- VarAngCr(img", i, ", rotarImagen(img", i, "_d_", j, ", 45))")))
+    cat("   Distortion nro: ", j, " \n")
+    eval(parse(text = paste0("var_ang_cr_", i, "_", j, "_45 <- VarAngCr(img", i, ", rotateImage(img", i, "_d_", j, ", 45))")))
   }
 }
 var_ang_cr_45 <- c()
@@ -649,12 +655,12 @@ for(i in 1:25){
   }
 }
 
-# Se obtienen los Pseudo Variogramas Angulares Cruzado para los ángulos 3, 30 y 45
+# The Angular Pseudo Cross-Variograms are obtained for angles 3°, 30° and 45°
 for(i in 1:25){
-  cat("Imagen nro: ", i, " \n")
+  cat("Image nro: ", i, " \n")
   for(j in 1:24){
-    cat("   Distorsión nro: ", j, " \n")
-    eval(parse(text = paste0("pseudo_var_ang_cr_", i, "_", j, "_3 <- PseudoVarAngCr(img", i, ", rotarImagen(img", i, "_d_", j, ", 3))")))
+    cat("   Distortion nro: ", j, " \n")
+    eval(parse(text = paste0("pseudo_var_ang_cr_", i, "_", j, "_3 <- PseudoVarAngCr(img", i, ", rotateImage(img", i, "_d_", j, ", 3))")))
   }
 }
 pseudo_var_ang_cr_3 <- c()
@@ -665,10 +671,10 @@ for(i in 1:25){
 }
 
 for(i in 1:25){
-  cat("Imagen nro: ", i, " \n")
+  cat("Image nro: ", i, " \n")
   for(j in 1:24){
-    cat("   Distorsión nro: ", j, " \n")
-    eval(parse(text = paste0("pseudo_var_ang_cr_", i, "_", j, "_30 <- PseudoVarAngCr(img", i, ", rotarImagen(img", i, "_d_", j, ", 30))")))
+    cat("   Distortion nro: ", j, " \n")
+    eval(parse(text = paste0("pseudo_var_ang_cr_", i, "_", j, "_30 <- PseudoVarAngCr(img", i, ", rotateImage(img", i, "_d_", j, ", 30))")))
   }
 }
 pseudo_var_ang_cr_30 <- c()
@@ -679,10 +685,10 @@ for(i in 1:25){
 }
 
 for(i in 1:25){
-  cat("Imagen nro: ", i, " \n")
+  cat("Image nro: ", i, " \n")
   for(j in 1:24){
-    cat("   Distorsión nro: ", j, " \n")
-    eval(parse(text = paste0("pseudo_var_ang_cr_", i, "_", j, "_45 <- PseudoVarAngCr(img", i, ", rotarImagen(img", i, "_d_", j, ", 45))")))
+    cat("   Distortion nro: ", j, " \n")
+    eval(parse(text = paste0("pseudo_var_ang_cr_", i, "_", j, "_45 <- PseudoVarAngCr(img", i, ", rotateImage(img", i, "_d_", j, ", 45))")))
   }
 }
 pseudo_var_ang_cr_45 <- c()
@@ -692,15 +698,17 @@ for(i in 1:25){
   }
 }
 
-# Se obtienen las estimaciones de los ángulos de rotación 3, 30 y 45 para el Variograma Angular Cruzado
+### Angular Cross-Variogram
+
+# Estimates of the rotation angles 3, 30 and 45 are obtained for the Angular Cross-Variogram
 ang_min_3_vac <- c()
 for(i in 1:600){
-  cat("Imagen número:",i,"\n")
+  cat("Image number:",i,"\n")
   ind <- which(sapply(var_ang_cr_3[,i], function(x) x == min(var_ang_cr_3[,i])))
   ang_min_3_vac[i] <- rbind(as.integer(ind))
 }
 mean(ang_min_3_vac)
-# Se obtienen las estimaciones de los ángulos de rotación para el Variograma Angular Cruzado por imagen y por distorsión
+# Estimates of the rotation angles for the Angular Cross-Variogram are obtained by image and by distortion
 ang_min_3_vac_x_img <- c()
 for(i in 1:25){
   cat(length(ang_min_3_vac[(24*i-23):(24*i)]), "\n")
@@ -714,12 +722,12 @@ for(i in 0:23){
 
 ang_min_30_vac <- c()
 for(i in 1:600){
-  cat("Imagen número:",i,"\n")
+  cat("Image number:",i,"\n")
   ind <- which(sapply(var_ang_cr_30[,i], function(x) x == min(var_ang_cr_30[,i])))
   ang_min_30_vac[i] <- rbind(as.integer(ind))
 }
 mean(ang_min_30_vac)
-# Se obtienen las estimaciones de los ángulos de rotación para el Variograma Angular Cruzado por imagen y por distorsión
+# Estimates of the rotation angles for the Angular Cross-Variogram are obtained by image and by distortion
 ang_min_30_vac_x_img <- c()
 for(i in 1:25){
   cat(length(ang_min_30_vac[(24*i-23):(24*i)]), "\n")
@@ -733,12 +741,12 @@ for(i in 0:23){
 
 ang_min_45_vac <- c()
 for(i in 1:600){
-  cat("Imagen número:",i,"\n")
+  cat("Image number:",i,"\n")
   ind <- which(sapply(var_ang_cr_45[,i], function(x) x == min(var_ang_cr_45[,i])))
   ang_min_45_vac[i] <- rbind(as.integer(ind))
 }
 mean(ang_min_45_vac)
-# Se obtienen las estimaciones de los ángulos de rotación para el Variograma Angular Cruzado por imagen y por distorsión
+# Estimates of the rotation angles for the Angular Cross-Variogram are obtained by image and by distortion
 ang_min_45_vac_x_img <- c()
 for(i in 1:25){
   cat(length(ang_min_45_vac[(24*i-23):(24*i)]), "\n")
@@ -750,15 +758,17 @@ for(i in 0:23){
   ang_min_45_vac_x_dist <- rbind(ang_min_45_vac_x_dist, cbind(mean(ang_min_45_vac[(1:600)%%24==i]), sd(ang_min_45_vac[(1:600)%%24==i])))
 }
 
-# Se obtienen las estimaciones de los ángulos de rotación 3, 30 y 45 para el Variograma Angular Cruzado
+### Angular Pseudo Cross-Variogram
+
+# Estimates of the rotation angles 3, 30 and 45 are obtained for the Angular Pseudo Cross-Variogram
 ang_min_3_pvac <- c()
 for(i in 1:600){
-  cat("Imagen número:",i,"\n")
+  cat("Image number:",i,"\n")
   ind <- which(sapply(pseudo_var_ang_cr_3[,i], function(x) x == min(pseudo_var_ang_cr_3[,i])))
   ang_min_3_pvac[i] <- rbind(as.integer(ind))
 }
 mean(ang_min_3_pvac)
-# Se obtienen las estimaciones de los ángulos de rotación para el Pseudo Variograma Angular Cruzado por imagen y por distorsión
+# Estimates of the rotation angles for the Angular Pseudo Cross-Variogram are obtained by image and by distortion
 ang_min_3_pvac_x_img <- c()
 for(i in 1:25){
   cat(length(ang_min_3_pvac[(24*i-23):(24*i)]), "\n")
@@ -772,12 +782,12 @@ for(i in 0:23){
 
 ang_min_30_pvac <- c()
 for(i in 1:600){
-  cat("Imagen número:",i,"\n")
+  cat("Image number:",i,"\n")
   ind <- which(sapply(pseudo_var_ang_cr_30[,i], function(x) x == min(pseudo_var_ang_cr_30[,i])))
   ang_min_30_pvac[i] <- rbind(as.integer(ind))
 }
 mean(ang_min_30_pvac)
-# Se obtienen las estimaciones de los ángulos de rotación para el Pseudo Variograma Angular Cruzado por imagen y por distorsión
+# Estimates of the rotation angles for the Angular Pseudo Cross-Variogram are obtained by image and by distortion
 ang_min_30_pvac_x_img <- c()
 for(i in 1:25){
   cat(length(ang_min_30_pvac[(24*i-23):(24*i)]), "\n")
@@ -791,12 +801,12 @@ for(i in 0:23){
 
 ang_min_45_pvac <- c()
 for(i in 1:600){
-  cat("Imagen número:",i,"\n")
+  cat("Image number:",i,"\n")
   ind <- which(sapply(pseudo_var_ang_cr_45[,i], function(x) x == min(pseudo_var_ang_cr_45[,i])))
   ang_min_45_pvac[i] <- rbind(as.integer(ind))
 }
 mean(ang_min_45_pvac)
-# Se obtienen las estimaciones de los ángulos de rotación para el Pseudo Variograma Angular Cruzado por imagen y por distorsión
+# Estimates of the rotation angles for the Angular Pseudo Cross-Variogram are obtained by image and by distortion
 ang_min_45_pvac_x_img <- c()
 for(i in 1:25){
   cat(length(ang_min_45_pvac[(24*i-23):(24*i)]), "\n")
@@ -808,6 +818,6 @@ for(i in 0:23){
   ang_min_45_pvac_x_dist <- rbind(ang_min_45_pvac_x_dist, cbind(mean(ang_min_45_pvac[(1:600)%%24==i]), sd(ang_min_45_pvac[(1:600)%%24==i])))
 }
 
-# Se guardan los resultados obtenidos para cada ángulo y estimador.
+# The results obtained for each angle and estimator are saved.
 ang_min_x_img <- cbind(ang_min_3_vac_x_img, ang_min_30_vac_x_img, ang_min_45_vac_x_img, ang_min_3_pvac_x_img, ang_min_30_pvac_x_img, ang_min_45_pvac_x_img)
 ang_min_x_dist <- cbind(ang_min_3_vac_x_dist, ang_min_30_vac_x_dist, ang_min_45_vac_x_dist, ang_min_3_pvac_x_dist, ang_min_30_pvac_x_dist, ang_min_45_pvac_x_dist)
